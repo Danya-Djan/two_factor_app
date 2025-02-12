@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Вход на удаленный сервер - Настройка 2FA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center">Авторизация</h3>
+                
+                {% if flash_messages %}
+                    {% for flash in flash_messages %}
+                        <div class="alert alert-{{ flash.category }} alert-dismissible">
+                            {{ flash.message }}
+                            <button type="button" class="close">&times;</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" action="/login">
+                    <div class="form-group">
+                        <label for="username">Имя пользователя:</label>
+                        <input type="text" name="username" placeholder="Введите имя пользователя" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Пароль:</label>
+                        <input type="password" name="password" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Вход и настройка 2FA</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html> 

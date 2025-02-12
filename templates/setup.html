@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Настройка 2FA - Отсканируйте QR-код</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center">Настройка 2FA</h3>
+                
+                {% if flash_messages %}
+                    {% for flash in flash_messages %}
+                        <div class="alert alert-{{ flash.category }} alert-dismissible">
+                            {{ flash.message }}
+                            <button type="button" class="close">&times;</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <p class="text-center">Отсканируйте QR-код ниже с помощью приложения-аутентификатора:</p>
+                <div class="text-center">
+                    <img src="data:image/png;base64,{{ img_data }}" alt="QR Code">
+                </div>
+                <p class="text-center">Введите 6-значный код, сгенерированный приложением:</p>
+                <form method="post" action="/setup">
+                    <div class="form-group">
+                        <input type="text" name="token" placeholder="Введите 6-значный код" required>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-block">Подтвердить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html> 

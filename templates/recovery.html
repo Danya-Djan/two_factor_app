@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Восстановление кодов - Настройка 2FA завершена</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title text-center">Коды восстановления</h3>
+        <p class="text-center">Сохраните эти коды в надежном месте. Они помогут восстановить доступ, если устройство 2FA будет утрачено.</p>
+        <ul class="list-group">
+          {% for code in recovery_codes %}
+            <li class="list-group-item">{{ code }}</li>
+          {% endfor %}
+        </ul>
+        <a href="/login" class="btn btn-primary btn-block">Вернуться к входу</a>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html> 
