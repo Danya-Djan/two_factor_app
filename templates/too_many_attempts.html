@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Слишком много попыток - Блокировка</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center">Доступ временно заблокирован</h3>
+                
+                {% if flash_messages %}
+                    {% for flash in flash_messages %}
+                        <div class="alert alert-{{ flash.category }} alert-dismissible">
+                            {{ flash.message }}
+                            <button type="button" class="close">&times;</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="text-center">
+                    <p>Ваш IP-адрес временно заблокирован из-за слишком большого количества неудачных попыток входа.</p>
+                    <p>Пожалуйста, подождите {{ lockout_minutes }} минут перед следующей попыткой.</p>
+                    
+                    <div class="mt-4">
+                        <a href="/login" class="btn btn-primary">Вернуться на страницу входа</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html> 

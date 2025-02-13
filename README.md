@@ -44,6 +44,12 @@
    sudo systemctl start twofactor
    ```
 
+## Запуск в контейнере
+
+```bash
+docker-compose -f docker-compose.yml up --build
+```
+
 ## Использование
 
 1. Откройте браузер и перейдите по адресу `http://your-server:8000/login`

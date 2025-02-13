@@ -9,6 +9,8 @@ import base64
 import pyotp
 import qrcode
 import secrets
+from time import time
+from typing import Dict, Tuple
 
 app = FastAPI()
 
@@ -32,6 +34,36 @@ def pop_flash(request: Request):
     return messages
 
 REMOTE_HOST = "10.255.255.20"
+MAX_ATTEMPTS = 3
+LOCKOUT_TIME = 300  # 5 minutes in seconds
+failed_attempts: Dict[str, Tuple[int, float]] = {}
+
+def check_rate_limit(request: Request) -> bool:
+    """
+    Check if the IP is currently rate limited.
+    Returns True if the request should be blocked.
+    """
+    client_ip = request.client.host
+    if client_ip in failed_attempts:
+        attempts, timestamp = failed_attempts[client_ip]
+        # If enough time has passed, reset the counter
+        if time() - timestamp > LOCKOUT_TIME:
+            failed_attempts.pop(client_ip)
+            return False
+        # Block if too many attempts
+        if attempts >= MAX_ATTEMPTS:
+            return True
+    return False
+
+def record_failed_attempt(request: Request):
+    """Record a failed login attempt for the IP address."""
+    client_ip = request.client.host
+    current_time = time()
+    if client_ip in failed_attempts:
+        attempts, _ = failed_attempts[client_ip]
+        failed_attempts[client_ip] = (attempts + 1, current_time)
+    else:
+        failed_attempts[client_ip] = (1, current_time)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request):
@@ -40,14 +72,25 @@ async def login_get(request: Request):
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    if check_rate_limit(request):
+        return RedirectResponse(url="/too-many-attempts", status_code=status.HTTP_303_SEE_OTHER)
+
     # Connect via SSH to remote server using provided credentials.
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
     try:
         client.connect(REMOTE_HOST, username=username, password=password)
+        # If login successful, clear any failed attempts for this IP
+        client_ip = request.client.host
+        if client_ip in failed_attempts:
+            failed_attempts.pop(client_ip)
     except Exception as e:
-        add_flash(request, f"SSH connection failed: {str(e)}", "error")
+        # Record the failed attempt
+        record_failed_attempt(request)
+        if check_rate_limit(request):
+            return RedirectResponse(url="/too-many-attempts", status_code=status.HTTP_303_SEE_OTHER)
+        add_flash(request, f"Ошибка подключения: {str(e)}", "error")
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     
     # SSH connection was successful.
@@ -135,6 +178,14 @@ async def recovery_get(request: Request):
     return templates.TemplateResponse("recovery.html", {
         "request": request,
         "recovery_codes": recovery_codes,
+        "flash_messages": pop_flash(request)
+    })
+
+@app.get("/too-many-attempts", response_class=HTMLResponse) 
+async def too_many_attempts(request: Request):
+    return templates.TemplateResponse("too_many_attempts.html", {
+        "request": request,
+        "lockout_minutes": LOCKOUT_TIME // 60,
         "flash_messages": pop_flash(request)
     })
 
