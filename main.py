@@ -85,6 +85,14 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         client_ip = request.client.host
         if client_ip in failed_attempts:
             failed_attempts.pop(client_ip)
+        
+        # Check if the key for this user has already been generated on the remote server.
+        stdin, stdout, stderr = client.exec_command('if [ -f ~/.google_authenticator ]; then echo exists; else echo not_exists; fi')
+        file_status = stdout.read().decode().strip()
+        if file_status == "exists":
+            add_flash(request, "Ключ для данного пользователя уже сгенерирован.", "info")
+            client.close()
+            return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
         # Record the failed attempt
         record_failed_attempt(request)
