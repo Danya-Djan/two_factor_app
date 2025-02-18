@@ -65,6 +65,7 @@ def record_failed_attempt(request: Request):
     else:
         failed_attempts[client_ip] = (1, current_time)
 
+@app.get("/", response_class=HTMLResponse)
 @app.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request):
     flash_messages = pop_flash(request)
