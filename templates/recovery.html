@@ -1,26 +1,39 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>Восстановление кодов - Настройка 2FA завершена</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+    <meta charset="utf-8">
+    <title>Резервные коды 2FA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The style.css file provides the common styling -->
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
-  <div class="container mt-5">
-    <div class="card">
-      <div class="card-body">
-        <h3 class="card-title text-center">Коды восстановления</h3>
-        <p class="text-center">Сохраните эти коды в надежном месте. Они помогут восстановить доступ, если устройство 2FA будет утрачено.</p>
-        <ul class="list-group">
-          {% for code in recovery_codes %}
-            <li class="list-group-item">{{ code }}</li>
-          {% endfor %}
-        </ul>
-        <a href="/login" class="btn btn-primary btn-block">Вернуться к входу</a>
-      </div>
+    <div class="container">
+        <div class="card">
+            <h2>Резервные коды для восстановления доступа</h2>
+            <p class="text-center">
+                Сохраните эти коды в надежном месте. Каждый код можно использовать только один раз.
+            </p>
+            <div class="recovery-codes">
+                <ul>
+                    {% for code in recovery_codes %}
+                        <li>{{ code }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="actions">
+                <a href="/login" class="btn">Вернуться на страницу входа</a>
+            </div>
+            {% if flash_messages %}
+                <div class="flash-messages">
+                    {% for flash in flash_messages %}
+                        <div class="alert alert-{{ flash.category }}">
+                            {{ flash.message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
     </div>
-  </div>
-  <script src="{{ url_for('static', path='script.js') }}"></script>
 </body>
 </html> 
