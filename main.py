@@ -94,9 +94,17 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         )
         file_status = stdout.read().decode().strip()
         if file_status == "exists":
+            # Get the existing secret from the .google_authenticator file
+            stdin, stdout, stderr = client.exec_command('cat ~/.google_authenticator')
+            secret = stdout.read().decode().strip().split('\n')[0]  # First line contains the secret
+            
+            # Save secret in session (but not recovery codes since we're not showing them)
+            request.session["secret"] = secret
+            request.session["remote_username"] = username
+            
             add_flash(request, "Ключ для данного пользователя уже сгенерирован.", "info")
             client.close()
-            return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse(url="/setup-existing", status_code=status.HTTP_303_SEE_OTHER)
 
         # Run the google-authenticator command to generate the key, QR code, and recovery codes.
         ga_command = "google-authenticator -t -C -f -D -r 3 -R 30 -e 5 -S 30 -w 3"
@@ -190,6 +198,32 @@ async def too_many_attempts(request: Request):
         "request": request,
         "lockout_minutes": LOCKOUT_TIME // 60,
         "flash_messages": pop_flash(request)
+    })
+
+@app.get("/setup-existing", response_class=HTMLResponse)
+async def setup_existing_get(request: Request):
+    secret = request.session.get("secret")
+    if not secret:
+        add_flash(request, "Секрет не найден. Пожалуйста, авторизуйтесь снова.", "error")
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    totp = pyotp.TOTP(secret)
+    remote_username = request.session.get("remote_username", "user")
+    account = f"{remote_username}@lins.ru"
+    otp_url = totp.provisioning_uri(name=account, issuer_name="LINS VPN")
+
+    # Generate QR code
+    qr = qrcode.make(otp_url)
+    img_io = io.BytesIO()
+    qr.save(img_io, "PNG")
+    img_io.seek(0)
+    encoded_img = base64.b64encode(img_io.getvalue()).decode("ascii")
+
+    flash_messages = pop_flash(request)
+    return templates.TemplateResponse("setup_existing.html", {
+        "request": request,
+        "img_data": encoded_img,
+        "flash_messages": flash_messages
     })
 
 if __name__ == '__main__':
